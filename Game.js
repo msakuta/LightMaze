@@ -72,6 +72,16 @@ function vecscale(v1,s2){
 	return [v1[0] * s2, v1[1] * s2];
 }
 
+/// Squared length of a vector
+function vecslen(v){
+	return vecdot(v,v)
+}
+
+/// Length of a vector
+function veclen(v){
+	Math.sqrt(vecslen(v))
+}
+
 /// Vector 2D distance
 function vecdist(v1,v2){
 	var dx = v1[0] - v2[0], dy = v1[1] - v2[1];
@@ -82,6 +92,38 @@ function vecdot(v1,v2){
 	return v1[0] * v2[0] + v1[1] * v2[1]
 }
 
+/// A generic algorithm to determine if a ray hits a circls' border.
+/// @param src The ray source position.
+/// @param dir The direction of the ray.
+/// @param dt The delta-time, or, length of the ray to check.
+/// @param obj The center point of the circle.
+/// @param radius The radius of the circle.
+function jHitCircle(src,dir,dt,obj,radius){
+	var del = vecsub(src, obj);
+
+	/* scalar product of the ray and the vector. */
+	var b = vecdot(dir, del);
+
+	var dirslen = vecslen(dir);
+	var c = dirslen * (vecslen(del) - radius * radius);
+
+	/* Discriminant */
+	var D = b * b - c;
+	if(D <= 0)
+		return [false];
+
+	var d = Math.sqrt(D);
+
+	/* Avoid zerodiv */
+	if(dirslen == 0.)
+		return [false];
+	var t0 = (-b - d) / dirslen;
+	var t1 = (-b + d) / dirslen;
+
+	return [0. <= t1 && t0 < dt, 0 <= t0 && t0 < dt ? t0 : t1];
+}
+
+
 
 
 function Instrument(x,y,angle){
@@ -90,9 +132,8 @@ function Instrument(x,y,angle){
 	this.angle = angle || 0;
 }
 
-Instrument.prototype.update = function(){
-
-}
+Instrument.prototype.update = function(){}
+Instrument.prototype.preUpdate = function(){}
 
 Instrument.prototype.getPos = function(){
 	return [this.x, this.y];
@@ -114,12 +155,24 @@ inherit(LaserSource, Instrument)
 
 LaserSource.prototype.update = function(dt){
 	this.angle = (this.angle + 0.01 * dt * Math.PI) % (2 * Math.PI)
+	graph.rayTraceMulti([this.x, this.y], this.angle, function(hitData){
+		if(hitData.hitobj instanceof LaserSensor){
+			// Determine hit if angle between incoming ray and sensor heading is less than 30 degrees.
+			if(vecdot([Math.cos(hitData.hitobj.angle), Math.sin(hitData.hitobj.angle)], hitData.dir) < -Math.sqrt(1./2))
+				hitData.hitobj.hit = true
+		}
+	})
 }
 
 function LaserSensor(x,y,angle){
 	Instrument.call(this,x,y,angle);
+	this.hit = false
 }
 inherit(LaserSensor, Instrument)
+
+LaserSensor.prototype.preUpdate = function(){
+	this.hit = false
+}
 
 // Wall segment
 function Wall(x0,y0,x1,y1){
@@ -159,6 +212,10 @@ Graph.prototype.update = function(dt){
 	var global_time = Graph.prototype.global_time;
 
 	for(var i = 0; i < this.instruments.length; i++){
+		this.instruments[i].preUpdate(dt);
+	}
+
+	for(var i = 0; i < this.instruments.length; i++){
 		this.instruments[i].update(dt);
 	}
 
@@ -172,6 +229,7 @@ Graph.prototype.rayTrace = function(x,y,dx,dy){
 	var bestt = 1e6
 	var endpoint
 	var bestn
+	var hitobj
 
 	// First pass scans walls
 	for(var i = 0; i < this.walls.length; i++){
@@ -187,28 +245,62 @@ Graph.prototype.rayTrace = function(x,y,dx,dy){
 			bestt = t
 			endpoint = vecadd(vecscale(d,t), r0)
 			bestn = n
+			hitobj = wall
 		}
 	}
 
 	// Now scan the instrument mirrors
 	for(var i = 0; i < this.instruments.length; i++){
 		var inst = this.instruments[i]
-		if(!(inst instanceof Mirror))
-			continue
-		var n = inst.getNormal()
-		var rr = vecsub(r0, [inst.x, inst.y])
-		var dotn = vecdot(rr, n)
-		// Almost parallel
-		if(Math.abs(dotn) < 1e-3)
-			continue
-		var t = -dotn / vecdot(d,n)
-		var iendpoint = vecadd(vecscale(d,t), r0)
-		if(1e-6 <= t && t < bestt && vecdist([inst.x, inst.y], iendpoint) < 15){
-			bestt = t
-			endpoint = iendpoint
-			bestn = n
+		if(inst instanceof Mirror){
+			var n = inst.getNormal()
+			var rr = vecsub(r0, [inst.x, inst.y])
+			var dotn = vecdot(rr, n)
+			// Almost parallel
+			if(Math.abs(dotn) < 1e-3)
+				continue
+			var t = -dotn / vecdot(d,n)
+			var iendpoint = vecadd(vecscale(d,t), r0)
+			if(1e-6 <= t && t < bestt && vecdist([inst.x, inst.y], iendpoint) < 15){
+				bestt = t
+				endpoint = iendpoint
+				bestn = n
+				hitobj = inst
+			}
+		}
+		else if(inst instanceof LaserSensor){
+			var rr = vecsub(r0, [inst.x, inst.y])
+			var hitCircle = jHitCircle(r0, d, 1000, [inst.x, inst.y], 15)
+			if(hitCircle[0] && hitCircle[1] < bestt){
+				bestt = hitCircle[1]
+				endpoint = vecadd(vecscale(d, hitCircle[1]), r0)
+				var nrr = vecscale(rr, 1 / veclen(rr))
+				bestn = vecadd(d, vecscale(nrr, -2 * vecdot(d, nrr)))
+				hitobj = inst
+			}
 		}
 	}
 
-	return [bestt, endpoint, bestn]
+	return {t: bestt, endpoint: endpoint, n: bestn, hitobj: hitobj, dir: d}
+}
+
+/// onReflect is called everytime the ray reflects mirror face
+Graph.prototype.rayTraceMulti = function(start,angle,onReflect){
+	var reflectCount = 0
+	var lastHit
+	do{
+		var dir = [Math.cos(angle), Math.sin(angle)]
+		var hitData = this.rayTrace(start[0], start[1], dir[0], dir[1])
+		lastHit = hitData.t < 1e6 && hitData.endpoint
+		if(lastHit){
+			if(onReflect)
+				onReflect(hitData)
+			start = hitData.endpoint
+			var reflectDir = vecadd(dir, vecscale(hitData.n, -2 * vecdot(dir, hitData.n)))
+			angle = Math.atan2(reflectDir[1], reflectDir[0])
+		}
+	} while(lastHit && reflectCount++ < 3)
+	// Call onReflect callback with pseudo-hitData
+	if(!lastHit && onReflect)
+		onReflect({t: 1000, endpoint: [start[0] + 1000 * Math.cos(angle), start[1] + 1000 * Math.sin(angle)]})
 }

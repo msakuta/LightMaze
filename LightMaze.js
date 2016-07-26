@@ -232,6 +232,7 @@ function draw() {
 		ctx.translate(pos[0], pos[1]);
 		ctx.rotate(v.angle);
 		if(v instanceof LaserSource){
+			ctx.fillStyle = "#fff"
 			ctx.beginPath()
 			ctx.moveTo(-15,-15)
 			ctx.lineTo(-15,15)
@@ -242,42 +243,32 @@ function draw() {
 			ctx.lineTo(5,-5)
 			ctx.lineTo(5,-15)
 			ctx.closePath()
+			ctx.fill()
 			ctx.stroke()
 
 			transform();
-			ctx.strokeStyle = "#fff";
 			var start = [v.x, v.y]
 			var angle = v.angle
+			ctx.strokeStyle = "#fff";
 			ctx.beginPath()
 			ctx.moveTo(v.x, v.y)
-			var reflectCount = 0
-			var lastHit
-			do{
-				var dir = [Math.cos(angle), Math.sin(angle)]
-				var hitData = graph.rayTrace(start[0], start[1], dir[0], dir[1])
-				lastHit = hitData[0] < 1e6 && hitData[1]
-				if(lastHit){
-					ctx.lineTo(hitData[1][0], hitData[1][1])
-					start = hitData[1]
-					var reflectDir = vecadd(dir, vecscale(hitData[2], -2 * vecdot(dir, hitData[2])))
-					angle = Math.atan2(reflectDir[1], reflectDir[0])
-				}
-			} while(lastHit && reflectCount++ < 3)
-			if(!lastHit)
-				ctx.lineTo(start[0] + 1000 * Math.cos(angle), start[1] + 1000 * Math.sin(angle))
+			graph.rayTraceMulti(start, angle, function(hitData){
+				ctx.lineTo(hitData.endpoint[0], hitData.endpoint[1])
+			})
 			ctx.stroke()
 		}
 		else if(v instanceof LaserSensor){
+			ctx.fillStyle = v.hit ? "#fff" : "#7f7f3f"
 			ctx.beginPath()
 			ctx.moveTo(-15,-15)
 			ctx.lineTo(-15,15)
 			ctx.lineTo(15,15)
-			ctx.lineTo(15,5)
-			ctx.lineTo(5,5)
-			ctx.lineTo(5,-5)
-			ctx.lineTo(15,-5)
+			ctx.lineTo(15,Math.sqrt(1./2)*15)
+			ctx.lineTo(0,0)
+			ctx.lineTo(15,-Math.sqrt(1./2)*15)
 			ctx.lineTo(15,-15)
 			ctx.closePath()
+			ctx.fill()
 			ctx.stroke()
 		}
 		else{
