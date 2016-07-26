@@ -136,17 +136,21 @@ function Graph(width, height){
 	//var rng = this.rng;
 	this.instruments = [];
 
-	this.instruments.push(new Mirror(100,150,Math.PI/4));
-	this.instruments.push(new Mirror(150,250,Math.PI/2));
-	this.instruments.push(new LaserSource(250,100,Math.PI/6))
-	this.instruments.push(new LaserSensor(70,250,-Math.PI/6))
+//	this.instruments.push(new Mirror(100,150,Math.PI/4));
+//	this.instruments.push(new Mirror(150,250,Math.PI/2));
+	this.instruments.push(new LaserSource(125,100,Math.PI/6))
+	this.instruments.push(new LaserSensor(325,100,-Math.PI/6))
 
 	this.walls = [];
 
-	this.walls.push(new Wall(50,50,400,50));
-	this.walls.push(new Wall(400,50,300,300));
-	this.walls.push(new Wall(300,300,50,300));
-	this.walls.push(new Wall(50,50,50,300));
+	this.walls.push(new Wall(50,50,200,50));
+	this.walls.push(new Wall(200,50,200,250));
+	this.walls.push(new Wall(200,250,250,250));
+	this.walls.push(new Wall(250,250,250,50));
+	this.walls.push(new Wall(250,50,400,50));
+	this.walls.push(new Wall(400,50,400,400));
+	this.walls.push(new Wall(400,400,50,400));
+	this.walls.push(new Wall(50,400,50,50));
 
 	// Selected instrument, do not automatically rotate over time
 	this.selected = null;
