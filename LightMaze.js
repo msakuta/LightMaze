@@ -13,41 +13,6 @@ var trans = [1,0,0,1,0,0];
 
 var drawCountElement = null;
 
-/// Vector 2D addition
-function vecadd(v1,v2){
-	return [v1[0] + v2[0], v1[1] + v2[1]];
-}
-
-/// Vector 2D scale
-function vecscale(v1,s2){
-	return [v1[0] * s2, v1[1] * s2];
-}
-
-/// Vector 2D distance
-function vecdist(v1,v2){
-	var dx = v1[0] - v2[0], dy = v1[1] - v2[1];
-	return Math.sqrt(dx * dx + dy * dy);
-}
-
-/// \brief Calculates product of matrices
-///
-/// Note that this function assumes arguments augmented matrices, see http://en.wikipedia.org/wiki/Augmented_matrix
-/// The least significant suffix is rows.
-/// To put it simply, array of coefficients as the same order as parameters to canvas.setTransform().
-function matmp(a,b){
-	var ret = new Array(6);
-	for(var i = 0; i < 3; i++){
-		for(var j = 0; j < 2; j++){
-			var val = 0;
-			for(var k = 0; k < 2; k++)
-				val += a[k * 2 + j] * b[i * 2 + k];
-			if(i === 2)
-				val += a[2 * 2 + j];
-			ret[i * 2 + j] = val;
-		}
-	}
-	return ret;
-}
 
 window.onload = function() {
 	canvas = document.getElementById("scratch");
