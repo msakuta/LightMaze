@@ -39,6 +39,19 @@ function vecdot(v1,v2){
 	return v1[0] * v2[0] + v1[1] * v2[1]
 }
 
+/// @brief Calculates product of an (augumented) matrix and a vector
+function matvp(ma,vb){
+	var ret = []
+	for(var j = 0; j < 2; j++){
+		var val = 0;
+		for(var k = 0; k < 2; k++)
+			val += ma[k * 2 + j] * vb[k];
+		val += ma[2 * 2 + j];
+		ret[j] = val;
+	}
+	return ret
+}
+
 /// \brief Calculates product of matrices
 ///
 /// Note that this function assumes arguments augmented matrices, see http://en.wikipedia.org/wiki/Augmented_matrix
@@ -57,6 +70,22 @@ function matmp(a,b){
 		}
 	}
 	return ret;
+}
+
+function matscale(m,s){
+	return [m[0] / s, m[1] / s, m[2] / s, m[3] / s, m[4] / s, m[5] / s]
+}
+
+/// @brief Compute inverse of an augmented matrix
+function matinv(m){
+	var det = m[0] * m[3] - m[1] * m[2]
+	if(det === 0)
+		return false
+	var ret = [m[0] / det, -m[2], -m[1] / det, m[3] / det, 0, 0]
+	var ofs = matvp(ret,[m[4], m[5]])
+	ret[4] = -ofs[0]
+	ret[5] = -ofs[1]
+	return ret
 }
 
 

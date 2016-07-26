@@ -9,6 +9,7 @@ var magnification = 1.;
 var mouseCenter = [0,0];
 var lastMouseCenter = [0,0];
 var mouseDragging = false;
+var mouseDragged = false;
 var trans = [1,0,0,1,0,0];
 
 var drawCountElement = null;
@@ -80,6 +81,15 @@ window.onload = function() {
 		return { top: Math.round(top), left: Math.round(left) }
 	}
 
+	function updateSelectedRotation(mouseCenter){
+		if(!graph.selected)
+			return;
+		var logicalCoord = matvp(matinv(trans), mouseCenter);
+
+		var newangle = Math.atan2(logicalCoord[1] - graph.selected.y, logicalCoord[0] - graph.selected.x);
+		graph.selected.angle = newangle;
+	}
+
 	canvas.onmousemove = function (e){
 
 		// For older InternetExplorerS
@@ -100,12 +110,21 @@ window.onload = function() {
 
 			lastMouseCenter[0] = mouseCenter[0];
 			lastMouseCenter[1] = mouseCenter[1];
+
+			// If the player moves mouse cursor during mouse button is down, his or
+			// her intention is probably not clicking, but dragging around, and
+			// this is a way to notify onclick event that it was a drag.
+			mouseDragged = true;
+		}
+		else{
+			updateSelectedRotation(mouseCenter);
 		}
 		e.preventDefault();
 	};
 
 	canvas.onmousedown = function(e){
 		mouseDragging = true;
+		mouseDragged = false;
 		mouseElement.innerHTML = "true";
 
 		var r = getOffsetRect(canvas);
@@ -117,6 +136,47 @@ window.onload = function() {
 	canvas.onmouseup = function(e){
 		mouseDragging = false;
 		mouseElement.innerHTML = "false";
+	};
+
+	canvas.onclick = function(e){
+		// For older InternetExplorerS
+		if (!e)	e = window.event;
+
+		var r = getOffsetRect(canvas);
+
+		mouseCenter[0] = e.clientX - r.left;
+		mouseCenter[1] = e.clientY - r.top;
+
+		// It's annoying if dragging is interpreted as a click especially when
+		// dragging has another meaning.
+		if(mouseDragged)
+			return;
+
+		if(graph.selected){
+			updateSelectedRotation(mouseCenter);
+			graph.selected = null;
+		}
+		else{
+			var logicalCoord = matvp(matinv(trans), mouseCenter);
+
+			console.log(logicalCoord[0] + "," + logicalCoord[1]);
+
+			for(var i = 0; i < graph.instruments.length; i++){
+				var inst = graph.instruments[i];
+				if(vecdist(logicalCoord, [inst.x, inst.y]) < 20){
+					graph.selected = inst;
+				}
+			}
+
+			// Debug output to see if matrix inverse is correct
+			function mat2str(m){
+				var debugstr = "";
+				for(var i = 0; i < 6; i++)
+					debugstr += m[i] + ",";
+				return "[" + debugstr + "]";
+			}
+			console.log(mat2str(trans) + ", " + mat2str(matinv(trans)) + ", " + mat2str(matmp(trans, matinv(trans))));
+		}
 	};
 
 	var loop = function() {
@@ -260,11 +320,33 @@ function draw() {
 
 		ctx.lineWidth = 1;
 
-		var n = v.getNormal()
+		var n = v.getNormal();
 		ctx.beginPath();
 		ctx.moveTo(v.x0, v.y0);
 		ctx.lineTo(v.x0 + 20 * n[0], v.y0 + 20 * n[1]);
-		ctx.stroke()
+		ctx.stroke();
+	}
+
+	// Draw selection box on top of everything
+	if(graph.selected){
+		transform();
+		ctx.translate(graph.selected.x, graph.selected.y);
+		ctx.rotate(graph.selected.angle);
+		function drawSelectionBox(){
+			ctx.strokeRect(-20, -20, 40, 40);
+			ctx.beginPath();
+			ctx.moveTo(50, 10);
+			ctx.lineTo(65, 0);
+			ctx.lineTo(50, -10);
+			ctx.closePath();
+			ctx.stroke();
+		}
+		ctx.strokeStyle = "#000";
+		ctx.lineWidth = 5;
+		drawSelectionBox();
+		ctx.strokeStyle = "#ffff00";
+		ctx.lineWidth = 3;
+		drawSelectionBox();
 	}
 
 	// Reset the transformation for the next drawing

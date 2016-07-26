@@ -88,7 +88,8 @@ function LaserSource(x,y,angle){
 inherit(LaserSource, Instrument)
 
 LaserSource.prototype.update = function(dt){
-	this.angle = (this.angle + 0.01 * dt * Math.PI) % (2 * Math.PI)
+	if(graph.selected !== this)
+		this.angle = (this.angle + 0.01 * dt * Math.PI) % (2 * Math.PI)
 	graph.rayTraceMulti([this.x, this.y], this.angle, function(hitData){
 		if(hitData.hitobj instanceof LaserSensor){
 			// Determine hit if angle between incoming ray and sensor heading is less than 30 degrees.
@@ -138,6 +139,9 @@ function Graph(width, height){
 	this.walls.push(new Wall(400,50,300,300));
 	this.walls.push(new Wall(300,300,50,300));
 	this.walls.push(new Wall(50,50,50,300));
+
+	// Selected instrument, do not automatically rotate over time
+	this.selected = null;
 }
 
 Graph.prototype.global_time = 0;
