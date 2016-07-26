@@ -88,8 +88,6 @@ function LaserSource(x,y,angle){
 inherit(LaserSource, Instrument)
 
 LaserSource.prototype.update = function(dt){
-	if(graph.selected !== this)
-		this.angle = (this.angle + 0.01 * dt * Math.PI) % (2 * Math.PI)
 	graph.rayTraceMulti([this.x, this.y], this.angle, function(hitData){
 		if(hitData.hitobj instanceof LaserSensor){
 			// Determine hit if angle between incoming ray and sensor heading is less than 30 degrees.
@@ -97,6 +95,17 @@ LaserSource.prototype.update = function(dt){
 				hitData.hitobj.hit = true
 		}
 	})
+}
+
+function MotorLaserSource(x,y,angle){
+	LaserSource.call(this,x,y,angle);
+}
+inherit(MotorLaserSource, LaserSource)
+
+MotorLaserSource.prototype.update = function(dt){
+	if(graph.selected !== this)
+		this.angle = (this.angle + 0.01 * dt * Math.PI) % (2 * Math.PI)
+	LaserSource.prototype.update.call(this,dt)
 }
 
 function LaserSensor(x,y,angle){
@@ -130,7 +139,6 @@ function Graph(width, height){
 	this.instruments.push(new Mirror(100,150,Math.PI/4));
 	this.instruments.push(new Mirror(150,250,Math.PI/2));
 	this.instruments.push(new LaserSource(250,100,Math.PI/6))
-	this.instruments.push(new LaserSource(200,150,Math.PI*5/6))
 	this.instruments.push(new LaserSensor(70,250,-Math.PI/6))
 
 	this.walls = [];

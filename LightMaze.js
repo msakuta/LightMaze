@@ -181,7 +181,7 @@ window.onload = function() {
 
 	var loop = function() {
 		draw();
-		var timer = setTimeout(loop,100);
+		var timer = setTimeout(loop,50);
 	};
 
 	loop();
