@@ -68,6 +68,7 @@ function Instrument(x,y,angle){
 
 Instrument.prototype.update = function(){}
 Instrument.prototype.preUpdate = function(){}
+Instrument.prototype.isReflective = function(){return false}
 
 Instrument.prototype.getPos = function(){
 	return [this.x, this.y];
@@ -81,6 +82,8 @@ inherit(Mirror, Instrument)
 Mirror.prototype.getNormal = function(){
 	return [Math.cos(this.angle), Math.sin(this.angle)]
 }
+
+Mirror.prototype.isReflective = function(){return true}
 
 function LaserSource(x,y,angle){
 	Instrument.call(this,x,y,angle);
@@ -119,16 +122,21 @@ LaserSensor.prototype.preUpdate = function(){
 }
 
 // Wall segment
-function Wall(x0,y0,x1,y1){
+function Wall(x0,y0,x1,y1,reflective){
 	this.x0 = x0;
 	this.y0 = y0;
 	this.x1 = x1;
 	this.y1 = y1;
+	this.reflective = reflective || false;
 }
 
 Wall.prototype.getNormal = function(){
 	var length = vecdist([this.x0, this.y0], [this.x1, this.y1])
 	return vecscale([this.y1 - this.y0, -(this.x1 - this.x0)], 1 / length)
+}
+
+Wall.prototype.isReflective = function(){
+	return this.reflective
 }
 
 function Graph(width, height){
@@ -149,7 +157,7 @@ function Graph(width, height){
 	this.walls.push(new Wall(250,250,250,50));
 	this.walls.push(new Wall(250,50,400,50));
 	this.walls.push(new Wall(400,50,400,400));
-	this.walls.push(new Wall(400,400,50,400));
+	this.walls.push(new Wall(400,400,50,400, true));
 	this.walls.push(new Wall(50,400,50,50));
 
 	// Selected instrument, do not automatically rotate over time
@@ -252,6 +260,8 @@ Graph.prototype.rayTraceMulti = function(start,angle,onReflect){
 		if(lastHit){
 			if(onReflect)
 				onReflect(hitData)
+			if(!(hitData.hitobj.isReflective()))
+				break
 			start = hitData.endpoint
 			var reflectDir = vecadd(dir, vecscale(hitData.n, -2 * vecdot(dir, hitData.n)))
 			angle = Math.atan2(reflectDir[1], reflectDir[0])

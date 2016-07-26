@@ -308,8 +308,8 @@ function draw() {
 
 		totalCounts.wall++;
 
-		ctx.strokeStyle = "#000";
-		ctx.lineWidth = 2;
+		ctx.strokeStyle = v.isReflective() ? "#005f7f" : "#000";
+		ctx.lineWidth = 3;
 
 		drawCounts.wall++;
 
