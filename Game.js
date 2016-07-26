@@ -108,6 +108,10 @@ function LaserSource(x,y,angle){
 }
 inherit(LaserSource, Instrument)
 
+LaserSource.prototype.update = function(dt){
+	this.angle = (this.angle + 0.1 * dt * Math.PI) % (2 * Math.PI)
+}
+
 function LaserSensor(x,y,angle){
 	Instrument.call(this,x,y,angle);
 }
@@ -163,6 +167,7 @@ Graph.prototype.rayTrace = function(x,y,dx,dy){
 	var d = [dx,dy]
 	var bestt = 1e6
 	var endpoint
+	var bestn
 	for(var i = 0; i < this.walls.length; i++){
 		var wall = this.walls[i]
 		var n = wall.getNormal()
@@ -174,7 +179,8 @@ Graph.prototype.rayTrace = function(x,y,dx,dy){
 		if(1e-6 <= t && t < bestt){
 			bestt = t
 			endpoint = vecadd(vecscale(d,t), r0)
+			bestn = n
 		}
 	}
-	return [bestt, endpoint]
+	return [bestt, endpoint, bestn]
 }

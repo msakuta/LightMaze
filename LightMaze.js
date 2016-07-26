@@ -246,14 +246,25 @@ function draw() {
 
 			transform();
 			ctx.strokeStyle = "#fff";
-			var hitData = graph.rayTrace(v.x, v.y, Math.cos(v.angle), Math.sin(v.angle))
+			var start = [v.x, v.y]
+			var angle = v.angle
 			ctx.beginPath()
 			ctx.moveTo(v.x, v.y)
-			if(hitData[0] < 1e6 && hitData[1]){
-				ctx.lineTo(hitData[1][0], hitData[1][1])
-			}
-			else
-				ctx.lineTo(v.x + 1000 * Math.cos(v.angle), 1000 * Math.sin(v.angle))
+			var reflectCount = 0
+			var lastHit
+			do{
+				var dir = [Math.cos(angle), Math.sin(angle)]
+				var hitData = graph.rayTrace(start[0], start[1], dir[0], dir[1])
+				lastHit = hitData[0] < 1e6 && hitData[1]
+				if(lastHit){
+					ctx.lineTo(hitData[1][0], hitData[1][1])
+					start = hitData[1]
+					var reflectDir = vecadd(dir, vecscale(hitData[2], -2 * vecdot(dir, hitData[2])))
+					angle = Math.atan2(reflectDir[1], reflectDir[0])
+				}
+			} while(lastHit && reflectCount++ < 3)
+			if(!lastHit)
+				ctx.lineTo(start[0] + 1000 * Math.cos(angle), start[1] + 1000 * Math.sin(angle))
 			ctx.stroke()
 		}
 		else if(v instanceof LaserSensor){
