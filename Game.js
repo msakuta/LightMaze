@@ -180,18 +180,25 @@ Graph.prototype.rayTrace = function(x,y,dx,dy){
 	// First pass scans walls
 	for(var i = 0; i < this.walls.length; i++){
 		var wall = this.walls[i]
+		var wall0 = [wall.x0, wall.y0] // Starting point of the wall
 		var n = wall.getNormal()
-		var rr = vecsub(r0, [wall.x0, wall.y0])
+		var rr = vecsub(r0, wall0)
 		var dotn = vecdot(rr, n)
 		// Almost parallel
 		if(Math.abs(dotn) < 1e-3)
 			continue
 		var t = -dotn / vecdot(d,n)
 		if(1e-6 <= t && t < bestt){
-			bestt = t
-			endpoint = vecadd(vecscale(d,t), r0)
-			bestn = n
-			hitobj = wall
+			var iendpoint = vecadd(vecscale(d,t), r0)
+			var d1 = vecsub([wall.x1, wall.y1], wall0)
+			var d1hat = vecnorm(d1)
+			var t1 = vecdot(vecsub(iendpoint, wall0), d1hat)
+			if(0 <= t1 && t1 < veclen(d1)){
+				bestt = t
+				endpoint = iendpoint
+				bestn = n
+				hitobj = wall
+			}
 		}
 	}
 

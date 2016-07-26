@@ -26,13 +26,17 @@ function vecslen(v){
 
 /// Length of a vector
 function veclen(v){
-	Math.sqrt(vecslen(v))
+	return Math.sqrt(vecslen(v))
 }
 
 /// Vector 2D distance
 function vecdist(v1,v2){
 	var dx = v1[0] - v2[0], dy = v1[1] - v2[1];
 	return Math.sqrt(dx * dx + dy * dy);
+}
+
+function vecnorm(v){
+	return vecscale(v, 1 / veclen(v));
 }
 
 function vecdot(v1,v2){

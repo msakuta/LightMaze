@@ -317,14 +317,6 @@ function draw() {
 		ctx.moveTo(v.x0, v.y0);
 		ctx.lineTo(v.x1, v.y1);
 		ctx.stroke()
-
-		ctx.lineWidth = 1;
-
-		var n = v.getNormal();
-		ctx.beginPath();
-		ctx.moveTo(v.x0, v.y0);
-		ctx.lineTo(v.x0 + 20 * n[0], v.y0 + 20 * n[1]);
-		ctx.stroke();
 	}
 
 	// Draw selection box on top of everything
