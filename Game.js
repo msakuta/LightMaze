@@ -103,13 +103,17 @@ function Mirror(x,y,angle){
 }
 inherit(Mirror, Instrument)
 
+Mirror.prototype.getNormal = function(){
+	return [Math.cos(this.angle), Math.sin(this.angle)]
+}
+
 function LaserSource(x,y,angle){
 	Instrument.call(this,x,y,angle);
 }
 inherit(LaserSource, Instrument)
 
 LaserSource.prototype.update = function(dt){
-	this.angle = (this.angle + 0.1 * dt * Math.PI) % (2 * Math.PI)
+	this.angle = (this.angle + 0.01 * dt * Math.PI) % (2 * Math.PI)
 }
 
 function LaserSensor(x,y,angle){
@@ -168,11 +172,14 @@ Graph.prototype.rayTrace = function(x,y,dx,dy){
 	var bestt = 1e6
 	var endpoint
 	var bestn
+
+	// First pass scans walls
 	for(var i = 0; i < this.walls.length; i++){
 		var wall = this.walls[i]
 		var n = wall.getNormal()
 		var rr = vecsub(r0, [wall.x0, wall.y0])
 		var dotn = vecdot(rr, n)
+		// Almost parallel
 		if(Math.abs(dotn) < 1e-3)
 			continue
 		var t = -dotn / vecdot(d,n)
@@ -182,5 +189,26 @@ Graph.prototype.rayTrace = function(x,y,dx,dy){
 			bestn = n
 		}
 	}
+
+	// Now scan the instrument mirrors
+	for(var i = 0; i < this.instruments.length; i++){
+		var inst = this.instruments[i]
+		if(!(inst instanceof Mirror))
+			continue
+		var n = inst.getNormal()
+		var rr = vecsub(r0, [inst.x, inst.y])
+		var dotn = vecdot(rr, n)
+		// Almost parallel
+		if(Math.abs(dotn) < 1e-3)
+			continue
+		var t = -dotn / vecdot(d,n)
+		var iendpoint = vecadd(vecscale(d,t), r0)
+		if(1e-6 <= t && t < bestt && vecdist([inst.x, inst.y], iendpoint) < 15){
+			bestt = t
+			endpoint = iendpoint
+			bestn = n
+		}
+	}
+
 	return [bestt, endpoint, bestn]
 }

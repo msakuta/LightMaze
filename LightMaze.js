@@ -281,7 +281,7 @@ function draw() {
 			ctx.stroke()
 		}
 		else{
-			ctx.fillRect(-15,-2,30,4);
+			ctx.fillRect(-2,-15,4,30);
 		}
 		transform();
 	}
