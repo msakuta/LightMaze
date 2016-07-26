@@ -140,31 +140,68 @@ Wall.prototype.isReflective = function(){
 }
 
 function Graph(width, height){
-	//this.rng = new Xor128(); // Create Random Number Generator
-	//var rng = this.rng;
 	this.instruments = [];
-
-//	this.instruments.push(new Mirror(100,150,Math.PI/4));
-//	this.instruments.push(new Mirror(150,250,Math.PI/2));
-	this.instruments.push(new LaserSource(125,100,Math.PI/6))
-	this.instruments.push(new LaserSensor(325,100,-Math.PI/6))
-
 	this.walls = [];
 
-	this.walls.push(new Wall(50,50,200,50));
-	this.walls.push(new Wall(200,50,200,250));
-	this.walls.push(new Wall(200,250,250,250));
-	this.walls.push(new Wall(250,250,250,50));
-	this.walls.push(new Wall(250,50,400,50));
-	this.walls.push(new Wall(400,50,400,400));
-	this.walls.push(new Wall(400,400,50,400, true));
-	this.walls.push(new Wall(50,400,50,50));
+	this.problems = [
+		function(){
+			this.instruments.push(new LaserSource(125,100,Math.PI/6))
+			this.instruments.push(new LaserSensor(325,100,-Math.PI/6))
+			this.walls.push(new Wall(50,50,400,50));
+			this.walls.push(new Wall(400,50,400,250));
+			this.walls.push(new Wall(400,250,50,250));
+			this.walls.push(new Wall(50,250,50,50));
+		},
+		function(){
+			this.instruments.push(new LaserSource(125,100,Math.PI/6))
+			this.instruments.push(new LaserSensor(325,100,-Math.PI/6))
+
+			this.walls.push(new Wall(50,50,200,50));
+			this.walls.push(new Wall(200,50,200,250));
+			this.walls.push(new Wall(200,250,250,250));
+			this.walls.push(new Wall(250,250,250,50));
+			this.walls.push(new Wall(250,50,400,50));
+			this.walls.push(new Wall(400,50,400,400));
+			this.walls.push(new Wall(400,400,50,400, true));
+			this.walls.push(new Wall(50,400,50,50));
+		},
+		function(){
+			this.instruments.push(new LaserSource(125,100,Math.PI/6))
+			this.instruments.push(new Mirror(225,350,Math.PI/4))
+			this.instruments.push(new LaserSensor(325,100,-Math.PI/6))
+
+			this.walls.push(new Wall(50,50,200,50));
+			this.walls.push(new Wall(200,50,200,250));
+			this.walls.push(new Wall(200,250,250,250));
+			this.walls.push(new Wall(250,250,250,50));
+			this.walls.push(new Wall(250,50,400,50));
+			this.walls.push(new Wall(400,50,400,400));
+			this.walls.push(new Wall(400,400,50,400));
+			this.walls.push(new Wall(50,400,50,50));
+		},
+	]
+
+	this.currentProblem = -1;
 
 	// Selected instrument, do not automatically rotate over time
 	this.selected = null;
+
+	this.stageCleared = false;
+
+	this.nextProblem();
 }
 
 Graph.prototype.global_time = 0;
+
+Graph.prototype.nextProblem = function(){
+	if(this.currentProblem+1 < this.problems.length){
+		this.instruments.splice(0, this.instruments.length);
+		this.walls.splice(0, this.walls.length);
+		this.problems[++this.currentProblem].call(this);
+		this.stageCleared = false;
+		this.selected = null;
+	}
+}
 
 Graph.prototype.update = function(dt){
 	var global_time = Graph.prototype.global_time;
@@ -176,6 +213,17 @@ Graph.prototype.update = function(dt){
 	for(var i = 0; i < this.instruments.length; i++){
 		this.instruments[i].update(dt);
 	}
+
+	var cleared = true
+	for(var i = 0; i < this.instruments.length; i++){
+		if(this.instruments[i] instanceof LaserSensor && !this.instruments[i].hit){
+			cleared = false
+			break
+		}
+	}
+
+	if(cleared)
+		this.stageCleared = true
 
 //	invokes++;
 	Graph.prototype.global_time += dt;

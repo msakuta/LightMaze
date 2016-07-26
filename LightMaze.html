@@ -6,14 +6,34 @@
 	<script type="text/javascript" src="vec.js"></script>
 	<script type="text/javascript" src="Game.js"></script>
 	<script type="text/javascript" src="LightMaze.js"></script>
+	<style>
+	/* Class that prevents text selection by mouse dragging.
+	  The style is not defined by standard, so we'd write down browser-dependent styles for major browsers.
+	  Support by IE11 is somewhat incomplete since Ctrl+A selects the text in elements even with this style. */
+	.noselect{
+		-webkit-touch-callout: none; /* iOS Safari */
+		-webkit-user-select: none;   /* Chrome/Safari/Opera */
+		-khtml-user-select: none;    /* Konqueror */
+		-moz-user-select: none;      /* Firefox */
+		-ms-user-select: none;       /* IE/Edge */
+		user-select: none;           /* non-prefixed version, currently
+									  not supported by any browser */
+	}
+	</style>
 </head>
 <body>
 	<div id="header">
 		<h1>Light Maze with JavaScript</h1>
 	</div>
-	<canvas id="scratch" width="600px" height="600px" style="width: 600px; height: 600px;">
-		<font size="+3" color="#ff0000">I'm sorry, but your browser seems not supporting HTML5 canvas. Try getting a modern browser and come again!</font>
-	</canvas>
+	<div id="stageno" style="font-size: 30px">Stage: 1</div>
+	<div id="container" style="position: relative">
+		<canvas id="scratch" width="600px" height="600px" style="width: 600px; height: 600px;">
+			<font size="+3" color="#ff0000">I'm sorry, but your browser seems not supporting HTML5 canvas. Try getting a modern browser and come again!</font>
+		</canvas>
+		<div style="position: absolute; display: none; text-align: center; width: 600px; top: 400px; font-size: 40px" id="nextstage">
+			<span class="noselect" onclick="nextStage()" style="border: 5px outset #cfcfcf; background-color: #afafaf">Next Stage</span>
+		</div>
+	</div>
 	<h2>Debug outputs</h2>
 	<p>Zoom: <span id="zoom"></span></p>
 	<p>Transform: <span id="trans"></span></p>

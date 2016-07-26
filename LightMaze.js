@@ -20,8 +20,10 @@ window.onload = function() {
 	if ( ! canvas || ! canvas.getContext ) {
 		return false;
 	}
-	width = parseInt(canvas.style.width);
-	height = parseInt(canvas.style.height);
+	var rect = canvas.getBoundingClientRect();
+	// IE8 doesn't support Rect.width nor height (nor even canvas)
+	width = rect.right - rect.left;
+	height = rect.bottom - rect.top;
 	graph = new Graph(width, height);
 
 	var zoomElement = document.getElementById("zoom");
@@ -187,8 +189,16 @@ window.onload = function() {
 	loop();
 };
 
+function nextStage(){
+	graph.nextProblem();
+	var nextStageElem = document.getElementById("nextstage");
+	nextStageElem.style.display = "none";
+	var stageNoElem = document.getElementById("stageno");
+	stageNoElem.innerHTML = "Stage: " + (graph.currentProblem + 1);
+}
+
 function resetTrans(ctx){
-	ctx.setTransform(1,0,0,1,200,200);
+	ctx.setTransform(1,0,0,1,0,0);
 }
 
 function draw() {
@@ -341,8 +351,22 @@ function draw() {
 		drawSelectionBox();
 	}
 
+	if(graph.stageCleared){
+		resetTrans(ctx);
+		ctx.font = "bold 40px Arial";
+		ctx.fillStyle = "#ff7fff";
+		var txt = "STAGE CLEAR!";
+		var textMetric = ctx.measureText(txt);
+		ctx.fillText(txt, width / 2, height / 2);
+	}
+
 	// Reset the transformation for the next drawing
 	transform();
+
+	if(graph.stageCleared){
+		var nextStageElem = document.getElementById("nextstage");
+		nextStageElem.style.display = "block";
+	}
 
 	var countStr = ""
 	for(var i = 0; i < countElements.length; i++)
