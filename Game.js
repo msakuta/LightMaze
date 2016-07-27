@@ -167,6 +167,21 @@ function Graph(width, height){
 		},
 		function(){
 			this.instruments.push(new LaserSource(125,100,Math.PI/6))
+			this.instruments.push(new LaserSensor(325,100,-Math.PI/6))
+
+			this.walls.push(new Wall(50,50,200,50));
+			this.walls.push(new Wall(200,50,200,250));
+			this.walls.push(new Wall(200,250,250,250));
+			this.walls.push(new Wall(250,250,250,50));
+			this.walls.push(new Wall(250,50,400,50));
+			this.walls.push(new Wall(400,50,400,250));
+			this.walls.push(new Wall(400,250,250,400, true));
+			this.walls.push(new Wall(250,400,200,400));
+			this.walls.push(new Wall(200,400,50,250,true));
+			this.walls.push(new Wall(50,250,50,50));
+		},
+		function(){
+			this.instruments.push(new LaserSource(125,100,Math.PI/6))
 			this.instruments.push(new Mirror(225,350,Math.PI/4))
 			this.instruments.push(new LaserSensor(325,100,-Math.PI/6))
 
