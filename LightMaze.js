@@ -181,6 +181,20 @@ window.onload = function() {
 		}
 	};
 
+	var stageno = document.getElementById('stageno');
+	if(stageno){
+		for(var i = 0; i < graph.problems.length; i++){
+			var cell = document.createElement('span');
+			cell.id = "stageno" + (i+1);
+			cell.innerHTML = (i+1);
+			cell.className = "noselect " + (i === graph.currentProblem ? "probcell currentProb" : "probcell");
+			cell.onclick = function(){
+				nextStage(parseInt(this.innerHTML)-1);
+			};
+			stageno.appendChild(cell);
+		}
+	}
+
 	var loop = function() {
 		draw();
 		var timer = setTimeout(loop,50);
@@ -189,12 +203,16 @@ window.onload = function() {
 	loop();
 };
 
-function nextStage(){
+function nextStage(stageno){
+	if(stageno !== undefined)
+		graph.currentProblem = stageno - 1;
 	graph.nextProblem();
 	var nextStageElem = document.getElementById("nextstage");
 	nextStageElem.style.display = "none";
-	var stageNoElem = document.getElementById("stageno");
-	stageNoElem.innerHTML = "Stage: " + (graph.currentProblem + 1);
+	for(var i = 0; i < graph.problems.length; i++){
+		var stageNoElem = document.getElementById("stageno" + (i + 1));
+		stageNoElem.className = "noselect " + (i === graph.currentProblem ? "probcell currentProb" : "probcell");
+	}
 }
 
 function resetTrans(ctx){

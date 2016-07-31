@@ -7,6 +7,20 @@
 	<script type="text/javascript" src="Game.js"></script>
 	<script type="text/javascript" src="LightMaze.js"></script>
 	<style>
+	.probcell{
+		background-color: #afaf00;
+		border: 2px solid #1f1f1f;
+		margin: 5px;
+		padding: 5px;
+	}
+	.probcell:hover{
+		background-color: #ffff7f;
+	}
+
+	.currentProb{
+		border: 3px solid #0000ff;
+	}
+
 	/* Class that prevents text selection by mouse dragging.
 	  The style is not defined by standard, so we'd write down browser-dependent styles for major browsers.
 	  Support by IE11 is somewhat incomplete since Ctrl+A selects the text in elements even with this style. */
@@ -25,7 +39,7 @@
 	<div id="header">
 		<h1>Light Maze with JavaScript</h1>
 	</div>
-	<div id="stageno" style="font-size: 30px">Stage: 1</div>
+	<div id="stageno" style="font-size: 30px; line-height: 200%">Stage:</div>
 	<div id="container" style="position: relative">
 		<canvas id="scratch" width="600px" height="600px" style="width: 600px; height: 600px;">
 			<font size="+3" color="#ff0000">I'm sorry, but your browser seems not supporting HTML5 canvas. Try getting a modern browser and come again!</font>
