@@ -194,6 +194,19 @@ function Graph(width, height){
 			this.walls.push(new Wall(400,400,50,400));
 			this.walls.push(new Wall(50,400,50,50));
 		},
+		function(){
+			this.instruments.push(new LaserSource(125,100,Math.PI/6))
+			this.instruments.push(new Mirror(200,350,Math.PI/4))
+			this.instruments.push(new Mirror(300,100,Math.PI/2))
+			this.instruments.push(new LaserSensor(375,350,-Math.PI/3))
+
+			this.walls.push(new Wall(50,50,450,50));
+			this.walls.push(new Wall(200,50,200,250));
+			this.walls.push(new Wall(450,50,450,400));
+			this.walls.push(new Wall(450,400,50,400));
+			this.walls.push(new Wall(300,400,300,150));
+			this.walls.push(new Wall(50,400,50,50));
+		},
 	]
 
 	this.currentProblem = -1;
