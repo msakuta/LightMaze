@@ -91,7 +91,7 @@ function LaserSource(x,y,angle){
 inherit(LaserSource, Instrument)
 
 LaserSource.prototype.update = function(dt){
-	graph.rayTraceMulti([this.x, this.y], this.angle, function(hitData){
+	this.game.rayTraceMulti([this.x, this.y], this.angle, function(hitData){
 		if(hitData.hitobj instanceof LaserSensor){
 			// Determine hit if angle between incoming ray and sensor heading is less than 30 degrees.
 			if(vecdot([Math.cos(hitData.hitobj.angle), Math.sin(hitData.hitobj.angle)], hitData.dir) < -Math.sqrt(1./2))
@@ -106,7 +106,7 @@ function MotorLaserSource(x,y,angle){
 inherit(MotorLaserSource, LaserSource)
 
 MotorLaserSource.prototype.update = function(dt){
-	if(graph.selected !== this)
+	if(this.game.selected !== this)
 		this.angle = (this.angle + 0.01 * dt * Math.PI) % (2 * Math.PI)
 	LaserSource.prototype.update.call(this,dt)
 }
@@ -139,7 +139,7 @@ Wall.prototype.isReflective = function(){
 	return this.reflective
 }
 
-function Graph(width, height){
+function LightMazeGame(width, height){
 	this.instruments = [];
 	this.walls = [];
 
@@ -219,20 +219,29 @@ function Graph(width, height){
 	this.nextProblem();
 }
 
-Graph.prototype.global_time = 0;
+LightMazeGame.prototype.global_time = 0;
 
-Graph.prototype.nextProblem = function(){
+LightMazeGame.prototype.nextProblem = function(){
 	if(this.currentProblem+1 < this.problems.length){
 		this.instruments.splice(0, this.instruments.length);
 		this.walls.splice(0, this.walls.length);
 		this.problems[++this.currentProblem].call(this);
+
+		// Update pointer to the game, which is very likely but not necessarily
+		// a singleton object. We do not want to write 'this' in every line in
+		// problems definition, so we do this after problem is initiated.
+		for(var i = 0; i < this.instruments.length; i++)
+			this.instruments[i].game = this;
+		for(var i = 0; i < this.walls.length; i++)
+			this.walls[i].game = this;
+
 		this.stageCleared = false;
 		this.selected = null;
 	}
 }
 
-Graph.prototype.update = function(dt){
-	var global_time = Graph.prototype.global_time;
+LightMazeGame.prototype.update = function(dt){
+	var global_time = LightMazeGame.prototype.global_time;
 
 	for(var i = 0; i < this.instruments.length; i++){
 		this.instruments[i].preUpdate(dt);
@@ -254,10 +263,10 @@ Graph.prototype.update = function(dt){
 		this.stageCleared = true
 
 //	invokes++;
-	Graph.prototype.global_time += dt;
+	LightMazeGame.prototype.global_time += dt;
 }
 
-Graph.prototype.rayTrace = function(x,y,dx,dy){
+LightMazeGame.prototype.rayTrace = function(x,y,dx,dy){
 	var r0 = [x,y]
 	var d = [dx,dy]
 	var bestt = 1e6
@@ -326,7 +335,7 @@ Graph.prototype.rayTrace = function(x,y,dx,dy){
 }
 
 /// onReflect is called everytime the ray reflects mirror face
-Graph.prototype.rayTraceMulti = function(start,angle,onReflect){
+LightMazeGame.prototype.rayTraceMulti = function(start,angle,onReflect){
 	var reflectCount = 0
 	var lastHit
 	do{

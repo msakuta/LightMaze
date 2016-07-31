@@ -3,7 +3,7 @@ var canvas;
 var width;
 var height;
 
-var graph;
+var game;
 
 var magnification = 1.;
 var mouseCenter = [0,0];
@@ -24,7 +24,7 @@ window.onload = function() {
 	// IE8 doesn't support Rect.width nor height (nor even canvas)
 	width = rect.right - rect.left;
 	height = rect.bottom - rect.top;
-	graph = new Graph(width, height);
+	game = new LightMazeGame(width, height);
 
 	var zoomElement = document.getElementById("zoom");
 	var transElement = document.getElementById("trans");
@@ -84,12 +84,12 @@ window.onload = function() {
 	}
 
 	function updateSelectedRotation(mouseCenter){
-		if(!graph.selected)
+		if(!game.selected)
 			return;
 		var logicalCoord = matvp(matinv(trans), mouseCenter);
 
-		var newangle = Math.atan2(logicalCoord[1] - graph.selected.y, logicalCoord[0] - graph.selected.x);
-		graph.selected.angle = newangle;
+		var newangle = Math.atan2(logicalCoord[1] - game.selected.y, logicalCoord[0] - game.selected.x);
+		game.selected.angle = newangle;
 	}
 
 	canvas.onmousemove = function (e){
@@ -154,19 +154,19 @@ window.onload = function() {
 		if(mouseDragged)
 			return;
 
-		if(graph.selected){
+		if(game.selected){
 			updateSelectedRotation(mouseCenter);
-			graph.selected = null;
+			game.selected = null;
 		}
 		else{
 			var logicalCoord = matvp(matinv(trans), mouseCenter);
 
 			console.log(logicalCoord[0] + "," + logicalCoord[1]);
 
-			for(var i = 0; i < graph.instruments.length; i++){
-				var inst = graph.instruments[i];
+			for(var i = 0; i < game.instruments.length; i++){
+				var inst = game.instruments[i];
 				if(vecdist(logicalCoord, [inst.x, inst.y]) < 20){
-					graph.selected = inst;
+					game.selected = inst;
 				}
 			}
 
@@ -183,11 +183,11 @@ window.onload = function() {
 
 	var stageno = document.getElementById('stageno');
 	if(stageno){
-		for(var i = 0; i < graph.problems.length; i++){
+		for(var i = 0; i < game.problems.length; i++){
 			var cell = document.createElement('span');
 			cell.id = "stageno" + (i+1);
 			cell.innerHTML = (i+1);
-			cell.className = "noselect " + (i === graph.currentProblem ? "probcell currentProb" : "probcell");
+			cell.className = "noselect " + (i === game.currentProblem ? "probcell currentProb" : "probcell");
 			cell.onclick = function(){
 				nextStage(parseInt(this.innerHTML)-1);
 			};
@@ -205,13 +205,13 @@ window.onload = function() {
 
 function nextStage(stageno){
 	if(stageno !== undefined)
-		graph.currentProblem = stageno - 1;
-	graph.nextProblem();
+		game.currentProblem = stageno - 1;
+	game.nextProblem();
 	var nextStageElem = document.getElementById("nextstage");
 	nextStageElem.style.display = "none";
-	for(var i = 0; i < graph.problems.length; i++){
+	for(var i = 0; i < game.problems.length; i++){
 		var stageNoElem = document.getElementById("stageno" + (i + 1));
-		stageNoElem.className = "noselect " + (i === graph.currentProblem ? "probcell currentProb" : "probcell");
+		stageNoElem.className = "noselect " + (i === game.currentProblem ? "probcell currentProb" : "probcell");
 	}
 }
 
@@ -235,7 +235,7 @@ function draw() {
 		return "#" + numToHex((1. + f) / 2.) + "7f7f";
 	}
 
-	graph.update(0.1);
+	game.update(0.1);
 
 	var ctx = canvas.getContext('2d');
 	ctx.setTransform(1,0,0,1,0,0);
@@ -267,8 +267,8 @@ function draw() {
 	// The first pass of GraphEdge traversal draws asphalt-colored, road-like graphics.
 	ctx.strokeStyle = "#000";
 	transform();
-	for(var i = 0; i < graph.instruments.length; i++){
-		var v = graph.instruments[i];
+	for(var i = 0; i < game.instruments.length; i++){
+		var v = game.instruments[i];
 		var pos = v.getPos();
 
 		totalCounts.instrument++;
@@ -305,7 +305,7 @@ function draw() {
 			ctx.strokeStyle = "#fff";
 			ctx.beginPath()
 			ctx.moveTo(v.x, v.y)
-			graph.rayTraceMulti(start, angle, function(hitData){
+			game.rayTraceMulti(start, angle, function(hitData){
 				ctx.lineTo(hitData.endpoint[0], hitData.endpoint[1])
 			})
 			ctx.stroke()
@@ -333,8 +333,8 @@ function draw() {
 	}
 
 	transform();
-	for(var i = 0; i < graph.walls.length; i++){
-		var v = graph.walls[i];
+	for(var i = 0; i < game.walls.length; i++){
+		var v = game.walls[i];
 
 		totalCounts.wall++;
 
@@ -350,10 +350,10 @@ function draw() {
 	}
 
 	// Draw selection box on top of everything
-	if(graph.selected){
+	if(game.selected){
 		transform();
-		ctx.translate(graph.selected.x, graph.selected.y);
-		ctx.rotate(graph.selected.angle);
+		ctx.translate(game.selected.x, game.selected.y);
+		ctx.rotate(game.selected.angle);
 		function drawSelectionBox(){
 			ctx.strokeRect(-20, -20, 40, 40);
 			ctx.beginPath();
@@ -371,7 +371,7 @@ function draw() {
 		drawSelectionBox();
 	}
 
-	if(graph.stageCleared){
+	if(game.stageCleared){
 		resetTrans(ctx);
 		ctx.font = "bold 40px Arial";
 		ctx.fillStyle = "#ff7fff";
@@ -383,7 +383,7 @@ function draw() {
 	// Reset the transformation for the next drawing
 	transform();
 
-	if(graph.stageCleared){
+	if(game.stageCleared){
 		var nextStageElem = document.getElementById("nextstage");
 		nextStageElem.style.display = "block";
 	}
