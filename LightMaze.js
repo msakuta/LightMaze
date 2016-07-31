@@ -307,6 +307,8 @@ function draw() {
 			ctx.stroke()
 		}
 		else{
+			// Mirror has glass-ish color
+			ctx.fillStyle = "#005f7f"
 			ctx.fillRect(-2,-15,4,30);
 		}
 		transform();
