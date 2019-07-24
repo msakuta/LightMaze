@@ -143,6 +143,20 @@ function LightMazeGame(width, height){
 	this.instruments = [];
 	this.walls = [];
 
+	var scope = this;
+	function polygonWalls(vertices){
+		if(vertices.len < 2)
+			return;
+		var last = vertices[0];
+		for(var i = 1; i < vertices.length; i++){
+			var next = vertices[i];
+			scope.walls.push(new Wall(last[0], last[1], next[0], next[1]));
+			last = next;
+		}
+		// Close the polygon (polyline would be different)
+		scope.walls.push(new Wall(next[0], next[1], vertices[0][0], vertices[0][1]));
+	}
+
 	this.problems = [
 		function(){
 			this.instruments.push(new LaserSource(125,100,Math.PI/6))
@@ -206,6 +220,32 @@ function LightMazeGame(width, height){
 			this.walls.push(new Wall(450,400,50,400));
 			this.walls.push(new Wall(300,400,300,150));
 			this.walls.push(new Wall(50,400,50,50));
+		},
+		function(){
+			this.instruments.push(new LaserSource(75,275,Math.PI/6))
+			this.instruments.push(new Mirror(475,275,-Math.PI*3/8))
+			this.instruments.push(new Mirror(275,75,Math.PI*4/5))
+			this.instruments.push(new LaserSensor(275,475,-Math.PI*4/3))
+
+			polygonWalls([
+				[50,250],
+				[50,300],
+				[250,300],
+				[250,500],
+				[300,500],
+				[300,300],
+				[500,300],
+				[500,250],
+				[300,50],
+				[250,50],
+				[250,250],
+			]);
+
+			polygonWalls([
+				[300,250],
+				[400,250],
+				[300,150],
+			])
 		},
 	]
 
