@@ -102,7 +102,7 @@ window.onload = function() {
 		mouseCenter[0] = e.clientX - r.left;
 		mouseCenter[1] = e.clientY - r.top;
 
-		if(mouseDragging){
+		if(mouseDragging && (mouseCenter[0] !== lastMouseCenter[0] || mouseCenter[1] !== lastMouseCenter[1])){
 			var nextx = trans[4] + mouseCenter[0] - lastMouseCenter[0];
 			var nexty = trans[5] + mouseCenter[1] - lastMouseCenter[1];
 			if(0 <= -nextx && -nextx < width * (trans[0] - 1))
