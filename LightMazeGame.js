@@ -159,6 +159,39 @@ function LightMazeGame(width, height){
 		scope.walls.push(new Wall(next[0], next[1], vertices[0][0], vertices[0][1], reflective));
 	}
 
+	var oneMinusGoldenRatio = (3 - Math.sqrt(5)) / 2.;
+
+	function star(radius, callback, reflective){
+		if(reflective === undefined)
+			reflective = true;
+		var points = [];
+		for(var i = 0; i < 10; i++){
+			var theta = i * Math.PI * 2. / 10.;
+			var r = i % 2 === 0 ? radius : radius * oneMinusGoldenRatio;
+			var cs = [Math.sin(theta), Math.cos(theta)];
+			points.push(cs.map(function(x){ return x * r + 300 }));
+			if(callback){
+				callback(i, cs.map(function(x){ return 225 * x + 300 }),
+					cs, [300, 300]);
+			}
+		}
+		polygonWalls(points, reflective);
+	}
+
+	function pentagon(radius, reflective){
+		if(reflective === undefined)
+			reflective = true;
+		var points = [];
+		for(var i = 0; i < 5; i++){
+			var theta = i * Math.PI * 2. / 5.;
+			var r = radius;
+			var cs = [Math.sin(theta), -Math.cos(theta)];
+			points.push(cs.map(function(x){ return x * r + 300 }));
+		}
+		polygonWalls(points, reflective);
+	}
+
+
 	this.problems = [
 		function(){
 			this.instruments.push(new LaserSource(125,100,Math.PI/6))
@@ -250,30 +283,37 @@ function LightMazeGame(width, height){
 			])
 		},
 		function(){
-			var self = this;
-			function star(radius, inst){
-				var points = [];
-				for(var i = 0; i < 10; i++){
-					var theta = i * Math.PI * 2. / 10.;
-					var r = i % 2 === 0 ? radius : radius * ((3 - Math.sqrt(5)) / 2.);
-					var cs = [Math.sin(theta), Math.cos(theta)];
-					points.push(cs.map(function(x){ return x * r + 300 }));
-					if(inst){
-						if(i === 0){
-							var pos = cs.map(function(x){ return x * 200 + 300});
-							self.instruments.push(new LaserSource(pos[0], pos[1], Math.PI / 3.));
-						}
-						else if(i === 4){
-							var pos = cs.map(function(x){ return x * 200 + 300});
-							self.instruments.push(new LaserSensor(pos[0], pos[1], Math.PI * 5. / 3.));
-						}
-					}
+			star(300, function(i, pos){
+				if(i === 0){
+					scope.instruments.push(new LaserSource(pos[0], pos[1], Math.PI / 3.));
 				}
-				polygonWalls(points, true);
-			}
-
-			star(300, true);
+				else if(i === 4){
+					scope.instruments.push(new LaserSensor(pos[0], pos[1], Math.PI * 5. / 3.));
+				}
+			});
 			star(150);
+		},
+		function(){
+			star(300, function(i, pos, direction, origin){
+				if(i === 0){
+					scope.instruments.push(new LaserSource(pos[0], pos[1], Math.PI / 3.));
+				}
+				if(i === 4){
+					pos = [0,1].map(function(j){ return direction[j] * 80 + origin[j] });
+					scope.instruments.push(new LaserSensor(pos[0], pos[1], Math.PI * 5. / 3.));
+				}
+				if(i === 5){
+					var [pos0, pos1] = [70, 300 * oneMinusGoldenRatio].map(function(r){
+						return [0,1].map(function(j){ return direction[j] * r + origin[j] });
+					});
+					scope.walls.push(new Wall(pos0[0], pos0[1], pos1[0], pos1[1], true));
+				}
+				if("0010001010"[i] === "1"){
+					pos = [0,1].map(function(j){ return direction[j] * (i % 2 === 0 ? 250 : 100) + origin[j] });
+					scope.instruments.push(new Mirror(pos[0], pos[1], Math.PI * 5. / 3.));
+				}
+			}, false);
+			pentagon(70, false);
 		},
 	]
 
