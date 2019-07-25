@@ -144,6 +144,15 @@ function LightMazeGame(width, height){
 	this.walls = [];
 	this.maxReflections = 10;
 
+	function parseBoolArray(a, i){
+		if(a instanceof Array)
+			return Boolean(a[i]);
+		else if(typeof a === "string")
+			return a[i] !== "0"; // Support shorthand string representation of boolean array
+		else
+			return a;
+	}
+
 	var scope = this;
 	function polygonWalls(vertices, reflective){
 		reflective = reflective || false;
@@ -152,11 +161,11 @@ function LightMazeGame(width, height){
 		var last = vertices[0];
 		for(var i = 1; i < vertices.length; i++){
 			var next = vertices[i];
-			scope.walls.push(new Wall(last[0], last[1], next[0], next[1], reflective));
+			scope.walls.push(new Wall(last[0], last[1], next[0], next[1], parseBoolArray(reflective, i)));
 			last = next;
 		}
 		// Close the polygon (polyline would be different)
-		scope.walls.push(new Wall(next[0], next[1], vertices[0][0], vertices[0][1], reflective));
+		scope.walls.push(new Wall(next[0], next[1], vertices[0][0], vertices[0][1], parseBoolArray(reflective, 0)));
 	}
 
 	var oneMinusGoldenRatio = (3 - Math.sqrt(5)) / 2.;
@@ -255,6 +264,23 @@ function LightMazeGame(width, height){
 			this.walls.push(new Wall(450,400,50,400));
 			this.walls.push(new Wall(300,400,300,150));
 			this.walls.push(new Wall(50,400,50,50));
+		},
+		function(){
+			this.instruments.push(new LaserSource(75,75,Math.PI/2))
+			this.instruments.push(new LaserSensor(325,325,0))
+
+			polygonWalls([
+				[50,50],
+				[50,200],
+				[200,200],
+				[200,350],
+				[350,350],
+				[350,300],
+				[250,300],
+				[250,150],
+				[100,150],
+				[100,50],
+			], "0111100111");
 		},
 		function(){
 			this.instruments.push(new LaserSource(75,275,Math.PI/6))
