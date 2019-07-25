@@ -283,6 +283,30 @@ function LightMazeGame(width, height){
 			])
 		},
 		function(){
+			var one;
+			star(300, function(i, pos, direction, origin){
+				if(i === 0){
+					scope.instruments.push(new LaserSource(pos[0], pos[1], Math.PI / 3.));
+				}
+				if(i === 1)
+					one = [0,1].map(function(j){ return direction[j] * 300 * oneMinusGoldenRatio + origin[j] });
+				if(i === 6){
+					pos = [0,1].map(function(j){ return direction[j] * 225 + origin[j] });
+					scope.instruments.push(new LaserSensor(pos[0], pos[1], Math.PI * 5. / 3.));
+				}
+				if(i === 9){
+					pos = [0,1].map(function(j){ return direction[j] * 300 * oneMinusGoldenRatio + origin[j] });
+					// Cheating by picking middle of 1st and 9th vertex instead of deriving exact solution
+					var middle = [0,1].map(function(j){ return (pos[j] + one[j]) / 2. });
+					scope.walls.push(new Wall(pos[0], pos[1], middle[0], middle[1]));
+				}
+				if("0010100010"[i] === "1"){
+					pos = [0,1].map(function(j){ return direction[j] * (i % 2 === 0 ? 225 : 100) + origin[j] });
+					scope.instruments.push(new Mirror(pos[0], pos[1], Math.PI * 5. / 3.));
+				}
+			}, false);
+		},
+		function(){
 			star(300, function(i, pos){
 				if(i === 0){
 					scope.instruments.push(new LaserSource(pos[0], pos[1], Math.PI / 3.));
