@@ -142,19 +142,21 @@ Wall.prototype.isReflective = function(){
 function LightMazeGame(width, height){
 	this.instruments = [];
 	this.walls = [];
+	this.maxReflections = 10;
 
 	var scope = this;
-	function polygonWalls(vertices){
+	function polygonWalls(vertices, reflective){
+		reflective = reflective || false;
 		if(vertices.len < 2)
 			return;
 		var last = vertices[0];
 		for(var i = 1; i < vertices.length; i++){
 			var next = vertices[i];
-			scope.walls.push(new Wall(last[0], last[1], next[0], next[1]));
+			scope.walls.push(new Wall(last[0], last[1], next[0], next[1], reflective));
 			last = next;
 		}
 		// Close the polygon (polyline would be different)
-		scope.walls.push(new Wall(next[0], next[1], vertices[0][0], vertices[0][1]));
+		scope.walls.push(new Wall(next[0], next[1], vertices[0][0], vertices[0][1], reflective));
 	}
 
 	this.problems = [
@@ -246,6 +248,32 @@ function LightMazeGame(width, height){
 				[400,250],
 				[300,150],
 			])
+		},
+		function(){
+			var self = this;
+			function star(radius, inst){
+				var points = [];
+				for(var i = 0; i < 10; i++){
+					var theta = i * Math.PI * 2. / 10.;
+					var r = i % 2 === 0 ? radius : radius * ((3 - Math.sqrt(5)) / 2.);
+					var cs = [Math.sin(theta), Math.cos(theta)];
+					points.push(cs.map(function(x){ return x * r + 300 }));
+					if(inst){
+						if(i === 0){
+							var pos = cs.map(function(x){ return x * 200 + 300});
+							self.instruments.push(new LaserSource(pos[0], pos[1], Math.PI / 3.));
+						}
+						else if(i === 4){
+							var pos = cs.map(function(x){ return x * 200 + 300});
+							self.instruments.push(new LaserSensor(pos[0], pos[1], Math.PI * 5. / 3.));
+						}
+					}
+				}
+				polygonWalls(points, true);
+			}
+
+			star(300, true);
+			star(150);
 		},
 	]
 
@@ -391,7 +419,7 @@ LightMazeGame.prototype.rayTraceMulti = function(start,angle,onReflect){
 			var reflectDir = vecadd(dir, vecscale(hitData.n, -2 * vecdot(dir, hitData.n)))
 			angle = Math.atan2(reflectDir[1], reflectDir[0])
 		}
-	} while(lastHit && reflectCount++ < 3)
+	} while(lastHit && reflectCount++ < this.maxReflections)
 	// Call onReflect callback with pseudo-hitData
 	if(!lastHit && onReflect)
 		onReflect({t: 1000, endpoint: [start[0] + 1000 * Math.cos(angle), start[1] + 1000 * Math.sin(angle)]})
