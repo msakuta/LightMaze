@@ -429,6 +429,7 @@ function LightMazeGame(width, height){
 
 	// Selected instrument, do not automatically rotate over time
 	this.selected = null;
+	this.fineTune = false;
 
 	this.stageCleared = false;
 

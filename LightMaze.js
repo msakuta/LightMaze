@@ -97,6 +97,8 @@ window.onload = function() {
 		// For older InternetExplorerS
 		if (!e)	e = window.event;
 
+		if (game.fineTune) return;
+
 		var r = getOffsetRect(canvas);
 
 		mouseCenter[0] = e.clientX - r.left;
@@ -154,7 +156,7 @@ window.onload = function() {
 		if(mouseDragged)
 			return;
 
-		if(game.selected){
+		if(game.selected && !game.fineTune){
 			updateSelectedRotation(mouseCenter);
 			game.selected = null;
 		}
@@ -195,7 +197,31 @@ window.onload = function() {
 		}
 	}
 
+	var controls = ["turnLeft", "turnLeftL", "turnRightL", "turnRight"];
+	var speeds = [-1, -0.02, 0.02, 1];
+	var pressed = [false, false, false, false];
+	for(var i = 0; i < controls.length; i++){
+		var control = document.getElementById(controls[i]);
+		control.addEventListener("mousedown", function(id){
+			return function(){
+				pressed[id] = true;
+			}
+		}(i));
+		function unpress(id){
+			return function(){
+				pressed[id] = false;
+			}
+		}
+		control.addEventListener("mouseup", unpress(i));
+		control.addEventListener("mouseleave", unpress(i));
+	}
+
 	var loop = function() {
+		for(var i = 0; i < controls.length; i++){
+			if(pressed[i] && game.selected && game.fineTune){
+				game.selected.angle += speeds[i] * Math.PI / 180;
+			}
+		}
 		draw();
 		var timer = setTimeout(loop,50);
 	};
@@ -399,4 +425,21 @@ function draw() {
 	for(var i = 0; i < countElements.length; i++)
 		countStr += countElements[i] + ": " + drawCounts[countElements[i]] + " / " + totalCounts[countElements[i]] + "<br>"
 	drawCountElement.innerHTML = countStr;
+}
+
+function fineTune(){
+	game.fineTune = !game.fineTune;
+	var elem = document.getElementById("fineTune");
+	if(game.fineTune){
+		elem.innerHTML = "FineTune";
+	}
+	else{
+		elem.innerHTML = "Click";
+	}
+}
+
+function turn(angle){
+	if(game.selected && game.fineTune){
+		game.selected.angle -= angle * Math.PI / 180;
+	}
 }
