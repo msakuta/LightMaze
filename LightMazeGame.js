@@ -139,6 +139,54 @@ Wall.prototype.isReflective = function(){
 	return this.reflective
 }
 
+Wall.prototype.rayHit = function(rayOrigin, rayDir){
+	var wall0 = [this.x0, this.y0] // Starting point of the wall
+	var n = this.getNormal()
+	var rr = vecsub(rayOrigin, wall0)
+	var dotn = vecdot(rr, n)
+	// Almost parallel
+	if(Math.abs(dotn) < 1e-3)
+		return null
+	var t = -dotn / vecdot(rayDir,n)
+	if(1e-6 <= t){
+		var endpoint = vecadd(vecscale(rayDir,t), rayOrigin)
+		var d1 = vecsub([this.x1, this.y1], wall0)
+		var d1hat = vecnorm(d1)
+		var t1 = vecdot(vecsub(endpoint, wall0), d1hat)
+		if(0 <= t1 && t1 < veclen(d1)){
+			return { t: t, endpoint: endpoint, normal: n }
+		}
+	}
+	return null
+}
+
+function Circle(x,y,radius){
+	this.x = x;
+	this.y = y;
+	this.radius = radius;
+}
+
+Circle.prototype.getNormal = function(pos){
+	var delta = vecsub(pos, [this.x, this.y])
+	return vecnorm(delta)
+}
+
+Circle.prototype.isReflective = function(){
+	return true
+}
+
+Circle.prototype.rayHit = function(rayOrigin, rayDir){
+	var hitCircle = jHitCircle(rayOrigin, rayDir, 1000, [this.x, this.y], this.radius)
+	if(!hitCircle[0]) return null
+	var circleOrigin = [this.x0, this.y0] // Starting point of the wall
+	var rr = vecsub(rayOrigin, circleOrigin)
+	var endpoint = vecadd(vecscale(rayDir, hitCircle[1]), rayOrigin)
+	var n = this.getNormal(endpoint)
+	var nrr = vecscale(rr, 1 / veclen(rr))
+	var reflection = vecsub(rayDir, vecscale(n, 2))
+	return { t: hitCircle[1], endpoint: endpoint, normal: n }
+}
+
 function LightMazeGame(width, height){
 	this.instruments = [];
 	this.walls = [];
@@ -365,6 +413,16 @@ function LightMazeGame(width, height){
 			}, false);
 			pentagon(70, false);
 		},
+		function(){
+			this.instruments.push(new LaserSource(125,100,Math.PI/6))
+			this.instruments.push(new LaserSensor(425,100,-Math.PI/6))
+			this.walls.push(new Circle(150, 250, 50));
+			this.walls.push(new Circle(320, 100, 50));
+			this.walls.push(new Wall(50,50,500,50));
+			this.walls.push(new Wall(500,50,500,290));
+			this.walls.push(new Wall(500,290,50,290));
+			this.walls.push(new Wall(50,290,50,50));
+		}
 	]
 
 	this.currentProblem = -1;
@@ -435,25 +493,13 @@ LightMazeGame.prototype.rayTrace = function(x,y,dx,dy){
 	// First pass scans walls
 	for(var i = 0; i < this.walls.length; i++){
 		var wall = this.walls[i]
-		var wall0 = [wall.x0, wall.y0] // Starting point of the wall
-		var n = wall.getNormal()
-		var rr = vecsub(r0, wall0)
-		var dotn = vecdot(rr, n)
-		// Almost parallel
-		if(Math.abs(dotn) < 1e-3)
-			continue
-		var t = -dotn / vecdot(d,n)
-		if(1e-6 <= t && t < bestt){
-			var iendpoint = vecadd(vecscale(d,t), r0)
-			var d1 = vecsub([wall.x1, wall.y1], wall0)
-			var d1hat = vecnorm(d1)
-			var t1 = vecdot(vecsub(iendpoint, wall0), d1hat)
-			if(0 <= t1 && t1 < veclen(d1)){
-				bestt = t
-				endpoint = iendpoint
-				bestn = n
-				hitobj = wall
-			}
+		var hitResult = wall.rayHit(r0,d)
+		if(hitResult === null) continue
+		if(hitResult.t < bestt){
+			bestt = hitResult.t
+			endpoint = hitResult.endpoint
+			bestn = hitResult.normal
+			hitobj = wall
 		}
 	}
 
@@ -505,8 +551,8 @@ LightMazeGame.prototype.rayTraceMulti = function(start,angle,onReflect){
 				onReflect(hitData)
 			if(!(hitData.hitobj.isReflective()))
 				break
-			start = hitData.endpoint
 			var reflectDir = vecadd(dir, vecscale(hitData.n, -2 * vecdot(dir, hitData.n)))
+			start = vecadd(hitData.endpoint, vecscale(reflectDir, 1e-3))
 			angle = Math.atan2(reflectDir[1], reflectDir[0])
 		}
 	} while(lastHit && reflectCount++ < this.maxReflections)

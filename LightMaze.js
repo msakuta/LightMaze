@@ -343,10 +343,17 @@ function draw() {
 
 		drawCounts.wall++;
 
-		ctx.beginPath();
-		ctx.moveTo(v.x0, v.y0);
-		ctx.lineTo(v.x1, v.y1);
-		ctx.stroke()
+		if(v instanceof Wall){
+			ctx.beginPath();
+			ctx.moveTo(v.x0, v.y0);
+			ctx.lineTo(v.x1, v.y1);
+			ctx.stroke()
+		}
+		else{
+			ctx.beginPath();
+			ctx.arc(v.x, v.y, v.radius, 0, 2 * Math.PI);
+			ctx.stroke();
+		}
 	}
 
 	// Draw selection box on top of everything
